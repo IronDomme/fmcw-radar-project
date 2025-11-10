@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Data files (large datasets should not be in git)
+data/recorded/*.bin
+data/recorded/*.h5
+data/simulated/*.bin
+data/simulated/*.h5
+*.npy
+*.npz
+
+# Temporary files
+*.tmp
+.tmp.*/
+*.log
+
+# C++ Build files
+cpp_embedded/build/
+cpp_embedded/CMakeFiles/
+cpp_embedded/cmake-build-*/
+*.o
+*.a
+*.so
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Plots and images generated during development
+*.png
+*.jpg
+*.pdf
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.pdf
+
+# Environment and secrets
+.env
+.env.local
+*.key
+*.pem
+
+# HackRF / SDR specific
+*.iq
+*.raw

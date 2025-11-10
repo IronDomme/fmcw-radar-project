@@ -1,0 +1,27 @@
+# Core scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+
+# Testing
+pytest>=7.3.0
+pytest-cov>=4.1.0
+
+# Data handling
+pandas>=2.0.0
+h5py>=3.8.0
+
+# Machine Learning (for classification module)
+scikit-learn>=1.2.0
+
+# Jupyter notebooks
+jupyter>=1.0.0
+ipython>=8.12.0
+notebook>=6.5.0
+
+# Configuration
+pyyaml>=6.0
+
+# Hardware integration (optional - for HackRF)
+# pyrtlsdr  # Uncomment if using RTL-SDR
+# hackrf    # Uncomment when HackRF Python bindings needed
