@@ -5,6 +5,7 @@ from typing import Tuple
 from python_prototype.waveform.chirp_generator import ChirpGenerator  
 from scipy.signal import windows
 from scipy.signal import find_peaks
+import warnings
 
 class RangeProcessor:
     """
@@ -45,15 +46,23 @@ class RangeProcessor:
             velocity_mps: Geschwindigkeit (ignoriert in Modul 2)
             
         Returns:
-            time: Zeit-Array
-            tx_signal: TX-Chirp-Signal
-            rx_signal: RX-Echo-Signal (verzögert und gedämpft)
+        time: Zeit-Array
+        tx_signal: TX-Chirp-Signal
+        rx_signal: RX-Echo-Signal (verzögert und gedämpft)
+        
+        
         """
         # Generiere TX-Chirp
         time, tx_signal, phase_tx = self.chirp_gen.generate_chirp()
         
         # TX-Amplitude (bei cos-Signal ist Amplitude = 1.0)
         A_tx = 1.0  # Vereinfacht, da tx_signal bereits normalisiert
+
+         # ===== FIX: Handle range_m = 0 =====
+        if range_m <= 0:
+            warnings.warn(f"Invalid range {range_m}m, using 0.1m instead", 
+                     RuntimeWarning)
+            range_m = 0.1
         
         # Berechne Laufzeit (Round-Trip Time)
         tau = 2 * range_m / self.c
@@ -82,7 +91,7 @@ class RangeProcessor:
 
     def mix_signals(self, tx, rx) -> Tuple[np.ndarray]:
         """
-        Mischt TX und RX → Beat-Signal.
+        Mischt TX und RX → Beat-Signal. Mixing / Heterodyning 
         """
         return tx * rx
 
@@ -92,7 +101,7 @@ class RangeProcessor:
         """
         # Erstelle ein Fenster mit der gleichen Länge wie das Signal und
         # multipliziere das Signal damit; gebe das geglättete Signal zurück.
-        win = windows.get_window(window_type, self.n_samples)
+        win = windows.get_window(window_type, len(beatsignal))
         return beatsignal * win
 
     def range_fft(self, beat_signal, window='hann') -> Tuple[np.ndarray, np.ndarray] :
@@ -124,46 +133,84 @@ class RangeProcessor:
         """
         return freq_hz * self.c * self.chirp_duration / (2 * self.bandwidth)
         
-    def detect_peaks(self, range_profile: np.ndarray, 
-                 threshold_db: float = None,
-                    num_peaks: int = None) -> np.ndarray:
+    def detect_peaks(self, range_profile: np.ndarray,
+                 snr_db: float = 20,
+                 max_peaks: int = 10) -> np.ndarray:
         """
-        Findet Peaks im Range-Profile.
+        Robuste Peak Detection mit mehreren Fallback-Strategien.
         
         Args:
             range_profile: Range-Profile [dB]
-            threshold_db: Absoluter Schwellenwert [dB] 
-                        (None = auto 20dB über Noise)
-            num_peaks: Max Anzahl Peaks (None = alle)
+            snr_db: Minimum Signal-to-Noise Ratio [dB]
+            max_peaks: Maximum Anzahl zu detektierender Peaks
             
         Returns:
             peak_indices: Array von Peak-Indizes (sortiert nach Stärke)
         """
+        from scipy.signal import find_peaks
         
+        # Schätze Noise Floor (robuste Methode)
+        sorted_profile = np.sort(range_profile)
+        noise_floor = np.median(sorted_profile[:len(sorted_profile)//4])
         
-        # Auto-Threshold wenn nicht angegeben
-        if threshold_db is None:
-            sorted_profile = np.sort(range_profile)
-            noise_floor = np.median(sorted_profile[:len(sorted_profile)//2])
-            threshold_db = noise_floor + 20  # 20 dB über Noise
-            print(f"Auto-Threshold: {threshold_db:.1f} dB (Noise Floor + 20dB)")
+        # Adaptive Threshold
+        threshold = noise_floor + snr_db
         
-        # Finde alle Peaks über Threshold
+        # DEBUG
+        print(f"\n[Peak Detection]")
+        print(f"  Profile range: [{np.min(range_profile):.1f}, {np.max(range_profile):.1f}] dB")
+        print(f"  Noise floor:   {noise_floor:.1f} dB")
+        print(f"  Threshold:     {threshold:.1f} dB")
+        print(f"  Above thresh:  {np.sum(range_profile > threshold)} bins")
+        
+        # Strategie 1: Mit moderaten Constraints
         peaks, properties = find_peaks(
             range_profile,
-            height=threshold_db,      # Min Höhe
-            distance=10,               # Min Abstand zwischen Peaks
-            prominence=5               # Peak muss 5dB über Umgebung sein
+            height=threshold,
+            prominence=5,          # Reduziert von 10 → 5 dB
+            distance=5,            # Reduziert von 10 → 5 bins (~3m)
+            width=(1, None)       # Reduziert von 2 → 1 bin
         )
         
-        # Sortiere nach Stärke (stärkste zuerst)
+        print(f"  Strategy 1 (prominence=5): {len(peaks)} peaks")
+        
+        # Strategie 2: Falls wenig gefunden, lockere weiter
+        if len(peaks) < 2:
+            peaks, _ = find_peaks(
+                range_profile,
+                height=threshold,
+                distance=3  # Nur min. Abstand
+            )
+            print(f"  Strategy 2 (distance=3):   {len(peaks)} peaks")
+        
+        # Strategie 3: Falls immer noch wenig, nur Height
+        if len(peaks) < 1:
+            peaks, _ = find_peaks(
+                range_profile,
+                height=threshold
+            )
+            print(f"  Strategy 3 (height only):  {len(peaks)} peaks")
+        
+        # Strategie 4: Notfall - nimm stärkste Peaks über Threshold
+        if len(peaks) < 1:
+            above_threshold = np.where(range_profile > threshold)[0]
+            if len(above_threshold) > 0:
+                # Sortiere nach Stärke
+                sorted_idx = np.argsort(range_profile[above_threshold])[::-1]
+                peaks = above_threshold[sorted_idx[:max_peaks]]
+                print(f"  Strategy 4 (manual):       {len(peaks)} peaks")
+        
+        # Sortiere nach Stärke und limitiere
         if len(peaks) > 0:
             peak_magnitudes = range_profile[peaks]
-            sorted_indices = np.argsort(peak_magnitudes)[::-1]  # Absteigend
-            peaks = peaks[sorted_indices]
+            sorted_idx = np.argsort(peak_magnitudes)[::-1]
+            peaks = peaks[sorted_idx]
             
-            # Limitiere Anzahl wenn gewünscht
-            if num_peaks is not None:
-                peaks = peaks[:num_peaks]
+            if len(peaks) > max_peaks:
+                peaks = peaks[:max_peaks]
+            
+            print(f"  Final peaks:   {len(peaks)}")
+        else:
+            print(f"  ❌ No peaks found!")
         
         return peaks

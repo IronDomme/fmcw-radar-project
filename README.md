@@ -14,7 +14,7 @@ This project implements a complete FMCW radar signal processing pipeline, from c
 - **CFAR Detection**: Constant False Alarm Rate target detection
 - **Tracking**: Kalman filter-based multi-target tracking
 - **Classification**: Micro-Doppler signature analysis and ML-based classification
-- **Hardware Integration**: Real-time processing with HackRF One SDR
+- **Hardware Integration**: Real-time processing with Hardware
 
 ## Project Structure
 
@@ -89,7 +89,7 @@ from python_prototype.signal_processing.range_fft import RangeFFT
 
 # Generate chirp
 chirp_gen = ChirpGenerator(f_start=24e9, bandwidth=200e6, T_chirp=100e-6, fs=10e6)
-chirp = chirp_gen.generate()
+chirp = chirp_gen.generate_chirp()
 
 # Process range
 range_proc = RangeFFT(chirp_gen.params)
@@ -109,11 +109,6 @@ python examples/doppler_demo.py
 python examples/full_pipeline_demo.py
 ```
 
-## Hardware Requirements
-
-- **SDR**: HackRF One (for RF transmission/reception)
-- **Embedded Platform**: Raspberry Pi 4 (4GB+ RAM recommended)
-- **Antennas**: 24 GHz patch antennas (TX/RX)
 
 ## Development Roadmap
 

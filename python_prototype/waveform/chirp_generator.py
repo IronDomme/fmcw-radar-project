@@ -50,26 +50,12 @@ class ChirpGenerator:
         print("-"*60)
         print("RADAR PERFORMANCE:")
         print(f"Range Resolution:   {self.range_resolution:.2f} m")
-        print(f"Max Range:          {self.max_range/1e3:.2f} km")
+        print(f"Max Range:          {self.max_range:.2f} m")
         print(f"Max Velocity:       {self.max_velocity:.2f} m/s ({self.max_velocity*3.6:.1f} km/h)")
         print("="*60 + "\n")
         
     
     def generate_chirp(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Generiert einen einzelnen FMCW Chirp.
-        
-        Returns:
-            time: Zeit-Array [s]
-            signal: Chirp-Signal (reell)
-        1. Erzeuge Zeit-Vektor (0 bis chirp_duration)
-        2. Berechne instantane Frequenz f(t) = f_start + chirp_rate * t
-        3. Berechne Phase: phi(t) = 2π * integral(f(t))
-        4. Signal: s(t) = cos(phi(t))
-        
-        Audio-Analogie: Das ist wie scipy.signal.chirp(), 
-        aber du schreibst es selbst um zu verstehen!
-        """
      
         #1. time vector
         t=np.linspace(0, self.chirp_duration, self.n_samples)  
