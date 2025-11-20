@@ -49,6 +49,25 @@ fmcw-radar-project/
     ├── doppler_demo.py
     └── full_pipeline_demo.py
 ```
+### System Limitations
+
+**Single-Channel Mixing (No IQ-Sampling):**
+- This implementation uses real-valued mixing for simplicity
+- Consequence: Cannot determine target direction (approaching vs. receding)
+- Doppler frequency magnitude is measured, but sign is ambiguous
+- Real-world systems use I/Q sampling for full directional information
+
+**Why this choice:**
+- Focus on core DSP concepts (Range-FFT, Doppler-FFT, 2D processing)
+- Reduced simulation complexity for educational purposes
+- I/Q extension possible as future enhancement
+
+**Doppler Information Source:**
+Despite no IQ-sampling, Doppler is detected through:
+- Phase progression between consecutive chirps
+- Complex FFT outputs preserve phase information
+- Doppler-FFT on complex range-data reveals velocity
+
 
 ## Installation
 
