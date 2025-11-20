@@ -4,7 +4,7 @@ A comprehensive FMCW (Frequency-Modulated Continuous Wave) radar signal processi
 
 ## Overview
 
-This project implements a complete FMCW radar signal processing pipeline, from chirp generation to target detection, tracking, and classification. It includes both a Python prototype for algorithm development and validation, and a C++ implementation optimized for embedded systems (Raspberry Pi with HackRF One).
+This project implements a complete FMCW radar signal processing pipeline, from chirp generation to target detection, tracking, and classification. It includes both a Python prototype for algorithm development and validation, and a C++ implementation optimized for embedded systems (Raspberry Pi).
 
 ## Features
 
@@ -38,7 +38,7 @@ fmcw-radar-project/
 │   ├── include/                       # Header files
 │   └── tests/                         # Unit tests
 ├── hardware_integration/              # HackRF One integration
-│   ├── hackrf_capture.py              # Data acquisition
+│   ├── capture.py                     # Data acquisition
 │   ├── realtime_processing.py         # Real-time pipeline
 │   └── config/                        # Configuration files
 ├── data/                              # Test data
